@@ -1,0 +1,6 @@
+# SGLang and its diffusion dependencies are installed from the official
+# SGLang source by install.sh using: pip install -e "python[diffusion]".
+# Keep this file for small project-side utilities only.
+huggingface_hub>=0.30.0
+requests>=2.31.0
+python-dotenv>=1.0.1
