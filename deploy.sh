@@ -10,7 +10,7 @@ ln -sfn "$(basename "$LOG_FILE")" "$PROJECT_DIR/logs/latest.log"
 exec > >(tee -a "$LOG_FILE") 2>&1
 
 log() {
-  printf '\\n[%s] [H3-DEPLOY] %s\\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
+  printf '\n[%s] [H3-DEPLOY] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*"
 }
 
 fail() {
