@@ -94,3 +94,23 @@ The health test does not submit a video-generation request.
 - [Official MiniMax H3 model card](https://huggingface.co/MiniMaxAI/MiniMax-H3)
 - [Official SGLang MiniMax H3 cookbook](https://github.com/sgl-project/sglang/blob/main/docs/cookbook/diffusion/MiniMax/MiniMax-H3.mdx)
 - [SGLang](https://github.com/sgl-project/sglang)
+
+## Windows CMD / PowerShell launcher (local PC only)
+
+If you want to start the same workflow from Windows, use the included WSL launcher:
+
+```cmd
+deploy-windows.bat
+```
+
+The launcher checks for an installed Ubuntu WSL distribution. If Ubuntu is missing, it requests installation with `wsl --install -d Ubuntu`; Windows may require Administrator approval and a restart. After installation, open Ubuntu once to finish its first-time username/password setup, then run `deploy-windows.bat` again.
+
+If WSL itself is not installed/enabled, open an elevated PowerShell and run:
+
+```powershell
+wsl --install -d Ubuntu
+```
+
+Restart if Windows requests it, open Ubuntu once, finish setup, and rerun the launcher.
+
+**Important:** This Windows launcher runs the deployment on your local PC inside WSL. It does not connect to or deploy on your Vast.ai instance. Your local PC must independently pass the same GPU, RAM, disk and driver checks. To deploy on Vast.ai, SSH into the Vast.ai Ubuntu machine and run `bash deploy.sh` there.
