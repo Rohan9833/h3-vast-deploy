@@ -12,7 +12,6 @@ fi
 # shellcheck disable=SC1091
 source .venv/bin/activate
 
-# Load optional local environment file without printing secrets.
 if [[ -f .env ]]; then
   set -a
   # shellcheck disable=SC1091
@@ -30,19 +29,17 @@ else
   DEFAULT_MODEL_PATH="MiniMaxAI/MiniMax-H3"
 fi
 
-echo "Starting MiniMax H3 FL2VA with two RTX 5090 GPUs."
+echo "Starting MiniMax H3 FL2VA with the single RTX 5090 layerwise-offload recipe."
 echo "Model path: ${MODEL_PATH:-$DEFAULT_MODEL_PATH}"
+echo "Profile: 1x RTX 5090 32 GB VRAM, 96 GB-class host RAM"
 exec python -m sglang.launch_server \
   --model-path "${MODEL_PATH:-$DEFAULT_MODEL_PATH}" \
   --model-variant fl2va \
-  --num-gpus 2 \
-  --tp-size 2 \
-  --ulysses-degree 1 \
-  --encoder-parallel auto \
   --performance-mode memory \
   --layerwise-offload-components dit,text_encoder,vae \
-  --dit-offload-prefetch-size 1 \
-  --dit-layerwise-resident-layers 20 \
-  --enable-torch-compile false \
+  --dit-layerwise-resident-layers 4 \
+  --layerwise-resident-layers video_vae=36 \
+  --warmup-resolutions 864x480 \
+  --warmup-num-frames 124 \
   --host "${HOST:-0.0.0.0}" \
   --port "${PORT:-30010}"
