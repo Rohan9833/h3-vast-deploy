@@ -45,7 +45,7 @@ fi
 [[ -x .venv/bin/python ]] || fail "Python environment not found. Run bash install.sh and inspect its errors."
 
 log "STEP 2/3: Downloading MiniMax H3 FL2VA checkpoint if it is not already complete."
-log "The Hugging Face aggregate progress bar shows percentage, downloaded bytes, speed and ETA."
+log "The Hugging Face per-file download progress bars shows percentage, downloaded bytes, speed and ETA."
 source .venv/bin/activate
 python -u download_model.py
 
