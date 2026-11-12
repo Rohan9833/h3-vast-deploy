@@ -10,3 +10,5 @@ logs/
 .cache/
 huggingface/
 *.log
+
+.install-complete
