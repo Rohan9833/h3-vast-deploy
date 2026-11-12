@@ -7,7 +7,13 @@ Write-Host ""
 
 $wsl = Get-Command wsl.exe -ErrorAction SilentlyContinue
 if (-not $wsl) {
-    Write-Host "WSL is not installed. Requesting WSL + Ubuntu installation..." -ForegroundColor Yellow
+    Write-Host "wsl.exe was not found. This Windows installation cannot bootstrap WSL from this script." -ForegroundColor Red
+    Write-Host "Install or enable Windows Subsystem for Linux, then install Ubuntu from an elevated PowerShell using: wsl --install -d Ubuntu"
+    exit 1
+}
+
+if ($true) {
+    Write-Host "WSL is available. Requesting WSL + Ubuntu installation if needed..." -ForegroundColor Yellow
     Write-Host "Windows may ask for Administrator permission. A Windows restart may be required."
     & wsl.exe --install -d Ubuntu
     Write-Host ""
