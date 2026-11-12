@@ -24,10 +24,16 @@ export HF_HOME="${HF_HOME:-$PROJECT_DIR/.cache/huggingface}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 mkdir -p "$HF_HOME" logs
 
+if [[ -f "$PROJECT_DIR/models/MiniMax-H3/FL2VA/model_index.json" ]]; then
+  DEFAULT_MODEL_PATH="$PROJECT_DIR/models/MiniMax-H3"
+else
+  DEFAULT_MODEL_PATH="MiniMaxAI/MiniMax-H3"
+fi
+
 echo "Starting MiniMax H3 FL2VA with two RTX 5090 GPUs."
-echo "The first launch may download model weights and take a while."
+echo "Model path: ${MODEL_PATH:-$DEFAULT_MODEL_PATH}"
 exec python -m sglang.launch_server \
-  --model-path "${MODEL_PATH:-MiniMaxAI/MiniMax-H3}" \
+  --model-path "${MODEL_PATH:-$DEFAULT_MODEL_PATH}" \
   --model-variant fl2va \
   --num-gpus 2 \
   --tp-size 2 \
