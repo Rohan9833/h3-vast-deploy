@@ -1,4 +1,4 @@
-"""Configuration for the MiniMax H3 FL2VA Vast.ai deployment."""
+"""Configuration for the single-RTX-5090 MiniMax H3 FL2VA deployment."""
 
 from __future__ import annotations
 
@@ -14,19 +14,16 @@ HF_HOME = Path(os.getenv("HF_HOME", str(PROJECT_DIR / ".cache" / "huggingface"))
 LOCAL_MODEL_DIR = Path(os.getenv("LOCAL_MODEL_DIR", str(PROJECT_DIR / "models" / "MiniMax-H3")))
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 
-# SGLang's verified 2x RTX 5090 TP2 + layerwise-offload profile.
+# Official SGLang single-RTX-5090 FL2VA memory/offload profile for a 96-GB-class host.
 SGLANG_ARGS = [
     "--model-path", str(LOCAL_MODEL_DIR) if LOCAL_MODEL_DIR.exists() else MODEL_ID,
     "--model-variant", MODEL_VARIANT,
-    "--num-gpus", "2",
-    "--tp-size", "2",
-    "--ulysses-degree", "1",
-    "--encoder-parallel", "auto",
     "--performance-mode", "memory",
     "--layerwise-offload-components", "dit,text_encoder,vae",
-    "--dit-offload-prefetch-size", "1",
-    "--dit-layerwise-resident-layers", "20",
-    "--enable-torch-compile", "false",
+    "--dit-layerwise-resident-layers", "4",
+    "--layerwise-resident-layers", "video_vae=36",
+    "--warmup-resolutions", "864x480",
+    "--warmup-num-frames", "124",
     "--host", HOST,
     "--port", str(PORT),
 ]
