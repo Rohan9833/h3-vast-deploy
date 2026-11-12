@@ -38,7 +38,7 @@ exec python -m sglang.launch_server \
   --num-gpus 2 \
   --tp-size 2 \
   --ulysses-degree 1 \
-  --encoder-parallel replicate \
+  --encoder-parallel auto \
   --performance-mode memory \
   --layerwise-offload-components dit,text_encoder,vae \
   --dit-offload-prefetch-size 1 \
