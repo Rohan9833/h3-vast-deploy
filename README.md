@@ -60,7 +60,7 @@ It performs these steps in order:
 2. Downloads **only `model_index.json` and `FL2VA/*`** from Hugging Face. It deliberately excludes `Ref2VA` and unrelated repository files.
 3. Starts the SGLang server on port `30010`.
 
-The Hugging Face aggregate progress bar reports downloaded bytes, percentage, transfer speed and ETA. The download can resume on a later run. The deployment script writes output to `logs/deploy-YYYYMMDD-HHMMSS.log`; `logs/latest.log` points to the latest run.
+The Hugging Face per-file download progress bars reports downloaded bytes, percentage, transfer speed and ETA. The download can resume on a later run. The deployment script writes output to `logs/deploy-YYYYMMDD-HHMMSS.log`; `logs/latest.log` points to the latest run.
 
 On later runs, successful dependencies and a completed model download are skipped; the script proceeds to start the server. To force dependency installation again, run:
 
