@@ -32,7 +32,7 @@ fi
 echo "Starting MiniMax H3 FL2VA with the single RTX 5090 layerwise-offload recipe."
 echo "Model path: ${MODEL_PATH:-$DEFAULT_MODEL_PATH}"
 echo "Profile: 1x RTX 5090 32 GB VRAM, 96 GB-class host RAM"
-exec sglang serve \\
+exec sglang serve \
   --model-path "${MODEL_PATH:-$DEFAULT_MODEL_PATH}" \
   --model-variant fl2va \
   --performance-mode memory \
