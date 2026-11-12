@@ -89,8 +89,6 @@ log "Creating runtime directories"
 mkdir -p models outputs logs
 chmod +x start_server.sh
 
+touch .install-complete
 log "Installation completed"
-printf '\nNext steps:\n'
-printf '  1. Configure HF_TOKEN / HF_HOME if needed: cp .env.example .env\n'
-printf '  2. Download model: source .venv/bin/activate && python download_model.py\n'
-printf '  3. Start server: bash start_server.sh\n'
+printf '\nNext step: run bash deploy.sh to download FL2VA (if needed) and start the server.\n'
