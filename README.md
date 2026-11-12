@@ -56,13 +56,27 @@ bash deploy.sh
 
 It performs these steps in order:
 
-1. Checks/installs OS packages, creates `.venv`, and installs SGLang Diffusion.
+1. Creates a lightweight Python environment and installs only the small download utilities. **No GPU, CUDA, SGLang, or large-RAM requirement is checked yet.**
 2. Downloads **only `model_index.json` and `FL2VA/*`** from Hugging Face. It deliberately excludes `Ref2VA` and unrelated repository files.
-3. Starts the SGLang server on port `30010`.
+3. Checks inference hardware, installs SGLang Diffusion, and starts the server on port `30010`.
 
-The Hugging Face per-file download progress bars reports downloaded bytes, percentage, transfer speed and ETA. The download can resume on a later run. The deployment script writes output to `logs/deploy-YYYYMMDD-HHMMSS.log`; `logs/latest.log` points to the latest run.
+This means model downloading works independently of GPU vendor or GPU presence, provided the machine has Python, internet access, and sufficient free disk. An incompatible GPU will only stop the later inference-installation stage; the downloaded checkpoint is kept.
 
-On later runs, successful dependencies and a completed model download are skipped; the script proceeds to start the server. To force dependency installation again, run:
+To download the model only, without GPU checks, SGLang installation, or server startup, run:
+
+```bash
+DOWNLOAD_ONLY=1 bash deploy.sh
+```
+
+To install and launch inference after the model has been downloaded on a compatible NVIDIA host, run:
+
+```bash
+bash deploy.sh
+```
+
+The Hugging Face per-file progress bars report downloaded bytes, percentage, transfer speed and ETA. The download can resume on a later run. The deployment script writes output to `logs/deploy-YYYYMMDD-HHMMSS.log`; `logs/latest.log` points to the latest run.
+
+On later runs, a completed model download is skipped. SGLang dependencies are installed only after the inference hardware checks pass. To force dependency installation again, run:
 
 ```bash
 FORCE_INSTALL=1 bash deploy.sh
