@@ -72,6 +72,21 @@ fi
 
 log "STEP 3/3: Checking inference hardware and installing SGLang."
 log "The model is already downloaded; an incompatible GPU will stop here without deleting the checkpoint."
+
+# Re-check on every run, including when .install-complete already exists.
+command -v nvidia-smi >/dev/null 2>&1 || fail "Inference requires an NVIDIA GPU and working nvidia-smi."
+GPU_COUNT="$(nvidia-smi --query-gpu=name --format=csv,noheader | wc -l | tr -d ' ')"
+[[ "$GPU_COUNT" -eq 1 ]] || fail "This branch requires exactly one visible RTX 5090; found $GPU_COUNT GPUs."
+GPU_NAME="$(nvidia-smi --query-gpu=name --format=csv,noheader | head -n 1)"
+grep -qi "RTX 5090" <<< "$GPU_NAME" || fail "This branch targets one RTX 5090; detected: $GPU_NAME."
+CPU_THREADS="$(nproc)"
+(( CPU_THREADS >= 16 )) || fail "This branch expects at least 16 visible CPU threads; found $CPU_THREADS."
+RAM_KIB="$(awk '/MemTotal/ {print $2}' /proc/meminfo)"
+RAM_GIB="$((RAM_KIB / 1024 / 1024))"
+(( RAM_GIB >= 88 )) || fail "This branch targets a 96-GB-class host (about 88 GiB minimum); detected about $RAM_GIB GiB."
+FREE_KIB="$(df -Pk "$PROJECT_DIR" | awk 'NR==2 {print $4}')"
+FREE_GIB="$((FREE_KIB / 1024 / 1024))"
+(( FREE_GIB >= 150 )) || fail "At least 150 GiB free disk is required; found $FREE_GIB GiB."
 if [[ "${FORCE_INSTALL:-0}" == "1" || ! -f .install-complete ]]; then
   bash install.sh
   [[ -f .install-complete ]] || fail "Installer finished but .install-complete marker is missing."
