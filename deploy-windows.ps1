@@ -12,15 +12,6 @@ if (-not $wsl) {
     exit 1
 }
 
-if ($true) {
-    Write-Host "WSL is available. Requesting WSL + Ubuntu installation if needed..." -ForegroundColor Yellow
-    Write-Host "Windows may ask for Administrator permission. A Windows restart may be required."
-    & wsl.exe --install -d Ubuntu
-    Write-Host ""
-    Write-Host "If installation asks you to restart, restart Windows, open Ubuntu once to create its Linux username/password, then run deploy-windows.bat again."
-    exit 0
-}
-
 # WSL list output can contain NUL characters depending on Windows/PowerShell version.
 $distros = @(& wsl.exe --list --quiet 2>$null | ForEach-Object { ($_ -replace "`0", "").Trim() } | Where-Object { $_ })
 $ubuntu = $distros | Where-Object { $_ -match "^Ubuntu($|[- ])" } | Select-Object -First 1
