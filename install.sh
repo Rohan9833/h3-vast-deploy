@@ -6,7 +6,7 @@ cd "$PROJECT_DIR"
 
 # Guardrails: adjust only deliberately. The documented 2x RTX 5090 SGLang
 # recipe is intended for a 384-GiB-class host and substantial local NVMe.
-MIN_RAM_GIB="${MIN_RAM_GIB:-340}"
+MIN_RAM_GIB="${MIN_RAM_GIB:-377}"
 MIN_DISK_GIB="${MIN_DISK_GIB:-200}"
 EXPECTED_GPUS="${EXPECTED_GPUS:-2}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
