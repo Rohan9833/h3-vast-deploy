@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Download only MiniMax H3 FL2VA files with Hugging Face aggregate progress."""
+"""Download only MiniMax H3 FL2VA files with Hugging Face per-file progress."""
 
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ def main() -> int:
 
     print(f"[MODEL] Repository: {MODEL_ID}", flush=True)
     print("[MODEL] Scope: model_index.json + FL2VA/* ONLY (Ref2VA is excluded).", flush=True)
-    print("[MODEL] Hugging Face progress bar reports aggregate bytes, percentage, speed and ETA.", flush=True)
+    print("[MODEL] Hugging Face progress bar reports each active file's downloaded bytes, percentage, speed and ETA; the outer bar tracks files.", flush=True)
     try:
         snapshot_download(
             repo_id=MODEL_ID,
