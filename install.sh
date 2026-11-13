@@ -33,6 +33,22 @@ if command -v apt-get >/dev/null 2>&1; then
     sudo apt-get install -y --no-install-recommends git git-lfs build-essential pkg-config ffmpeg libgl1 libglib2.0-0 python3-venv python3-dev curl ca-certificates
   else fail "apt dependencies missing and neither root nor sudo is available."; fi
 fi
+
+log "Checking Rust toolchain (required by SGLang build)"
+if ! command -v cargo >/dev/null 2>&1; then
+  command -v curl >/dev/null 2>&1 || fail "curl is required to install Rust/Cargo."
+  log "Cargo not found; installing the minimal stable Rust toolchain with rustup."
+  curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --profile minimal
+fi
+export PATH="$HOME/.cargo/bin:$PATH"
+if [[ -f "$HOME/.cargo/env" ]]; then
+  # shellcheck disable=SC1090
+  source "$HOME/.cargo/env"
+fi
+command -v cargo >/dev/null 2>&1 || fail "Rust installation finished but cargo is still unavailable in PATH."
+cargo --version
+rustc --version
+
 git lfs install --skip-repo >/dev/null 2>&1 || true
 log "Creating virtual environment"
 [[ -d .venv ]] || "$PYTHON_BIN" -m venv .venv
