@@ -2,7 +2,7 @@
 set -Eeuo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
-MIN_DISK_GIB="${MIN_DISK_GIB:-150}"
+MIN_INSTALL_DISK_GIB="${MIN_INSTALL_DISK_GIB:-10}"
 PYTHON_BIN="${PYTHON_BIN:-python3}"
 log() { printf '\n[H3-DEPLOY] %s\n' "$*"; }
 fail() { printf '\n[H3-DEPLOY][ERROR] %s\n' "$*" >&2; exit 1; }
@@ -18,7 +18,7 @@ mkdir -p "$PROJECT_DIR/.cache"
 AVAILABLE_KIB="$(df -Pk "$PROJECT_DIR" | awk 'NR==2 {print $4}')"
 AVAILABLE_GIB="$((AVAILABLE_KIB / 1024 / 1024))"
 df -h "$PROJECT_DIR"
-(( AVAILABLE_GIB >= MIN_DISK_GIB )) || fail "Only ${AVAILABLE_GIB} GiB free; configured disk target is ${MIN_DISK_GIB} GiB. Adjust MIN_DISK_GIB if appropriate."
+(( AVAILABLE_GIB >= MIN_INSTALL_DISK_GIB )) || fail "Only ${AVAILABLE_GIB} GiB free; installer needs ${MIN_INSTALL_DISK_GIB} GiB of runtime headroom. Adjust MIN_INSTALL_DISK_GIB if appropriate."
 log "Checking Python"
 "$PYTHON_BIN" --version
 "$PYTHON_BIN" -c 'import sys; assert sys.version_info >= (3, 10), "Python 3.10+ required"'
