@@ -91,4 +91,4 @@ chmod +x start_server.sh
 
 touch .install-complete
 log "Flexible Recipe A inference dependencies installed"
-printf '\nNext step: run bash deploy.sh to download FL2VA (if needed) and start the server.\n"
+printf '\nNext step: run bash deploy.sh to download FL2VA (if needed) and start the server.\n'
