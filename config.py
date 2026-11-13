@@ -1,4 +1,4 @@
-"""Configuration for the single-RTX-5090 MiniMax H3 FL2VA deployment."""
+"""Configuration for the flexible MiniMax H3 FL2VA Recipe A deployment."""
 
 from __future__ import annotations
 
@@ -14,13 +14,12 @@ HF_HOME = Path(os.getenv("HF_HOME", str(PROJECT_DIR / ".cache" / "huggingface"))
 LOCAL_MODEL_DIR = Path(os.getenv("LOCAL_MODEL_DIR", str(PROJECT_DIR / "models" / "MiniMax-H3")))
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 
-# Official SGLang single-RTX-5090 FL2VA memory/offload profile for a 96-GB-class host.
+# SGLang MiniMax H3 FL2VA Recipe A: no --dit-layerwise-resident-layers option.
 SGLANG_ARGS = [
-    "--model-path", str(LOCAL_MODEL_DIR) if LOCAL_MODEL_DIR.exists() else MODEL_ID,
+    "--model-path", str(LOCAL_MODEL_DIR) if (LOCAL_MODEL_DIR / "FL2VA" / "model_index.json").exists() else MODEL_ID,
     "--model-variant", MODEL_VARIANT,
     "--performance-mode", "memory",
     "--layerwise-offload-components", "dit,text_encoder,vae",
-    "--dit-layerwise-resident-layers", "4",
     "--layerwise-resident-layers", "video_vae=36",
     "--warmup-resolutions", "864x480",
     "--warmup-num-frames", "124",
