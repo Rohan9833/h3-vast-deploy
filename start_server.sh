@@ -4,17 +4,11 @@ set -Eeuo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$PROJECT_DIR"
 
-if [[ ! -d .venv ]]; then
-  echo "Virtual environment missing. Run bash install.sh first." >&2
-  exit 1
-fi
-
-# shellcheck disable=SC1091
+[[ -d .venv ]] || { echo "Virtual environment missing. Run bash install.sh first." >&2; exit 1; }
 source .venv/bin/activate
 
 if [[ -f .env ]]; then
   set -a
-  # shellcheck disable=SC1091
   source .env
   set +a
 fi
@@ -29,15 +23,14 @@ else
   DEFAULT_MODEL_PATH="MiniMaxAI/MiniMax-H3"
 fi
 
-echo "Starting MiniMax H3 FL2VA with the single RTX 5090 layerwise-offload recipe."
+echo "Starting MiniMax H3 FL2VA using SGLang Recipe A (memory offloading)."
 echo "Model path: ${MODEL_PATH:-$DEFAULT_MODEL_PATH}"
-echo "Profile: 1x RTX 5090 32 GB VRAM, 96 GB-class host RAM"
+echo "Profile: configurable single NVIDIA GPU with at least 12 GB VRAM and 32 GB-class host RAM."
 exec sglang serve \
   --model-path "${MODEL_PATH:-$DEFAULT_MODEL_PATH}" \
   --model-variant fl2va \
   --performance-mode memory \
   --layerwise-offload-components dit,text_encoder,vae \
-  --dit-layerwise-resident-layers 4 \
   --layerwise-resident-layers video_vae=36 \
   --warmup-resolutions 864x480 \
   --warmup-num-frames 124 \
