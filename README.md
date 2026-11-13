@@ -1,108 +1,63 @@
-# MiniMax H3 FL2VA on Vast.ai — Single RTX 5090
+# MiniMax H3 FL2VA on Vast.ai — Flexible Recipe A
 
-One-command deployment for **MiniMax H3 FL2VA** with SGLang Diffusion on one Vast.ai host with **1× NVIDIA RTX 5090 (32 GB)**.
+Flexible deployment profile for **MiniMax H3 FL2VA** using the SGLang Recipe A memory-offload command.
 
-## Target machine
+## Recipe A hardware target
 
 | Component | Target |
 |---|---|
-| GPU | 1× NVIDIA RTX 5090, 32 GB VRAM |
-| CPU | 16–24 cores / at least 16 visible CPU threads |
-| Host RAM | 96 GB recommended (the installer accepts about 88 GiB detected) |
-| Storage | 250 GB+ NVMe; keep at least 150 GiB free |
-| OS | Ubuntu 24.04 with a working NVIDIA driver |
-| Model | MiniMaxAI/MiniMax-H3, FL2VA partition |
-| API port | 30010 |
+| GPU | One compatible NVIDIA GPU |
+| GPU VRAM | 12 GB-class minimum (configurable check: 12000 MiB) |
+| Host RAM | 32 GB-class minimum (about 29 GiB detected) |
+| CPU | No fixed minimum specified by the Recipe A excerpt |
+| Storage | Fast NVMe strongly recommended |
+| Free disk | This project's downloader/installer conservatively checks for 150 GiB free |
+| Model | MiniMaxAI/MiniMax-H3, FL2VA variant |
+| Initial warmup | 864×480, 124 frames |
+| Server | 0.0.0.0:30010 by default |
 
-This branch uses the official SGLang single-RTX-5090 recipe: memory performance mode, layerwise offload for DiT/text encoder/VAE, four resident DiT layers for the 96-GB host tier, and 36 resident video-VAE layers. The upstream cookbook reports a physical RTX 5090 run at 864×480 and 124 frames on a 60 GB host with 8 GB swap; its consumer-hardware selector adds four resident DiT layers for the 96 GB+ host tier. These are workload-specific measurements, not a guarantee for every resolution, frame count, or request.
+**Important:** 12 GB VRAM + 32 GB host RAM is the cookbook's Recipe A memory-fitting configuration, not a guarantee of identical performance on every GPU or host. The cookbook's low-host-memory benchmark used a machine with very large RAM for caching; a real 32 GB host may be substantially slower due to repeated NVMe reads. Use fast NVMe storage.
 
-Official recipe: [SGLang MiniMax H3 cookbook](https://github.com/sgl-project/sglang/blob/main/docs/cookbook/diffusion/MiniMax/MiniMax-H3.mdx).
-
-## 1. Rent and verify the Vast.ai instance
-
-Choose one host with:
-- 1× RTX 5090 (32 GB)
-- 96 GB system RAM
-- 16–24 CPU cores
-- 250 GB+ NVMe
-- Ubuntu 24.04
-
-SSH into the instance and run:
+## Recipe A command used
 
 ```bash
-nvidia-smi
-free -h
-df -h /
-nproc
+PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True \
+sglang serve --model-path MiniMaxAI/MiniMax-H3 --model-variant fl2va \
+  --performance-mode memory \
+  --layerwise-offload-components dit,text_encoder,vae \
+  --layerwise-resident-layers video_vae=36
 ```
 
-Do not proceed if the GPU, RAM, CPU, or storage differs materially from the target. Vast offers can report decimal GB while Linux reports GiB; the installer uses an 88-GiB minimum to accommodate that unit conversion for a nominal 96-GB host.
+The server script uses this Recipe A configuration and adds host, port and warmup options. It deliberately does **not** add `--dit-layerwise-resident-layers 4`, which belongs to the separate faster Recipe B.
 
-## 2. Clone this branch
+## Setup on Vast.ai
 
-```bash
-git clone --branch feature/single-rtx5090-96gb https://github.com/Rohan9833/h3-vast-deploy.git
-cd h3-vast-deploy
-```
-
-If the repository is private, use your configured GitHub SSH access instead of the HTTPS URL.
-
-## 3. Optional Hugging Face token
-
-If Hugging Face requires authentication for your account:
-
-```bash
-cp .env.example .env
-nano .env
-```
-
-Set `HF_TOKEN=hf_...`. Never commit or share `.env`.
-
-## 4. Install, download and launch
+1. Use a Linux/Ubuntu instance with a working NVIDIA driver, one GPU with at least 12 GB VRAM, at least 32 GB system RAM, and fast NVMe storage.
+2. Upload this project folder using JupyterLab.
+3. Create/configure `.env` from `.env.example` and set `HF_TOKEN` if Hugging Face requires authentication.
+4. Run:
 
 ```bash
 bash deploy.sh
 ```
 
-The script:
-1. Creates a lightweight Python environment and installs download utilities.
-2. Downloads only `model_index.json` and `FL2VA/*` (Ref2VA is excluded).
-3. Checks for exactly one RTX 5090, at least 16 CPU threads, about 96 GB host RAM, and at least 150 GiB free disk.
-4. Installs SGLang Diffusion and starts the single-GPU layerwise-offload server on port 30010.
+The script downloads the FL2VA checkpoint, validates the configured hardware thresholds, installs SGLang Diffusion and starts the API server. Set `DOWNLOAD_ONLY=1` to download without starting inference.
 
-The model download happens before inference hardware validation. If the inference checks fail, the downloaded checkpoint remains on disk.
+## Flexible hardware thresholds
 
-To download only, without installing SGLang or starting inference:
+The defaults are intentionally set for Recipe A. You can override them when running the scripts:
 
 ```bash
-DOWNLOAD_ONLY=1 bash deploy.sh
+MIN_GPU_VRAM_MIB=12000 MIN_RAM_GIB=29 MIN_DISK_GIB=150 bash deploy.sh
 ```
 
-The Hugging Face progress bars report per-file bytes, percentage, transfer speed and ETA. Re-running the downloader resumes completed files. Logs are written to `logs/deploy-YYYYMMDD-HHMMSS.log`; `logs/latest.log` points to the latest log.
+For a deliberate experiment on a different host, these variables can be adjusted. Lowering them does not make an underpowered machine compatible; it only changes the script's preflight checks.
 
-## 5. Test the API
+## Generate videos
 
-Keep the server running and open a second SSH terminal:
-
-```bash
-cd h3-vast-deploy
-source .venv/bin/activate
-python test_api.py --base-url http://127.0.0.1:30010
-```
-
-This health test does not generate a video. Submit a separate generation request to validate end-to-end video generation.
-
-## Important notes
-
-- This branch is specifically for **one RTX 5090**, not two-GPU TP2. It intentionally removes `--num-gpus 2`, `--tp-size 2`, and the two-GPU resident-layer setting.
-- The 96 GB RAM target is a recommended host tier, not a claim that the model mathematically requires exactly 96 GB. SGLang's upstream single-5090 physical run reports 60 GB RAM plus 8 GB swap at a specific 480p workload; this branch uses the upstream 96-GB host-tier tuning.
-- The upstream single-card result is not a guarantee for arbitrary resolution, duration, concurrency, or simultaneous workloads. Start with the documented 864×480, 124-frame warmup/workload and test before increasing settings.
-- Keep the Vast instance and persistent volume while downloading or generating. Rental charges continue while the instance is rented.
-- The deployment has not yet been tested on your rented Vast instance. Do not assume successful generation until a real request completes.
-- Review the [MiniMax H3 model card and license](https://huggingface.co/MiniMaxAI/MiniMax-H3) before use.
+This repository currently deploys and health-checks the SGLang server. A dedicated prompt-to-video client still needs to be implemented and tested against the exact SGLang API before command-line video generation is available.
 
 ## References
 
-- [Official SGLang MiniMax H3 cookbook](https://github.com/sgl-project/sglang/blob/main/docs/cookbook/diffusion/MiniMax/MiniMax-H3.mdx)
-- [MiniMax H3 model card](https://huggingface.co/MiniMaxAI/MiniMax-H3)
-- [SGLang](https://github.com/sgl-project/sglang)
+- [SGLang MiniMax H3 cookbook](https://github.com/sgl-project/sglang/blob/main/docs/cookbook/diffusion/MiniMax/MiniMax-H3.mdx)
+- [MiniMax H3 model repository](https://huggingface.co/MiniMaxAI/MiniMax-H3)
