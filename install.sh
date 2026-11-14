@@ -29,7 +29,7 @@ if command -v apt-get >/dev/null 2>&1; then
   if [[ "$(id -u)" -eq 0 ]]; then
     apt-get update
     apt-get install -y --no-install-recommends \
-      git git-lfs curl ca-certificates build-essential pkg-config \
+      git git-lfs curl ca-certificates build-essential pkg-config clang \
       ffmpeg libgl1 libglib2.0-0 python3-venv python3-dev
   elif command -v sudo >/dev/null 2>&1; then
     sudo apt-get update
@@ -83,8 +83,16 @@ else
   git -C .deps/sglang pull --ff-only
 fi
 
-# Cargo is on PATH for pip's isolated build process as well.
+# Cargo and Clang are selected explicitly for the SGLang native-extension build.
+# The Rust cc crate honors CC/CXX when compiling the PyTorch C++ bindings.
+command -v clang >/dev/null 2>&1 || fail "clang is required for the SGLang native build."
+command -v clang++ >/dev/null 2>&1 || fail "clang++ is required for the SGLang native build."
 export PATH="$CARGO_HOME/bin:$PATH"
+export CC=clang
+export CXX=clang++
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-4}"
+log "Building SGLang with Clang: CC=$CC, CXX=$CXX, Cargo jobs=$CARGO_BUILD_JOBS"
 python -m pip install -e ".deps/sglang/python[diffusion]" --upgrade
 
 log "Installing project utilities"
