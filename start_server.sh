@@ -30,7 +30,7 @@ else
   DEFAULT_MODEL_PATH="MiniMaxAI/MiniMax-H3"
 fi
 
-echo "Starting MiniMax H3 FL2VA with two RTX 5090 GPUs."
+echo "Starting MiniMax H3 FL2VA with two RTX 5090 GPUs (without explicit layer-wise CPU offloading)."
 echo "Model path: ${MODEL_PATH:-$DEFAULT_MODEL_PATH}"
 exec python -m sglang.launch_server \
   --model-path "${MODEL_PATH:-$DEFAULT_MODEL_PATH}" \
@@ -40,9 +40,6 @@ exec python -m sglang.launch_server \
   --ulysses-degree 1 \
   --encoder-parallel auto \
   --performance-mode memory \
-  --layerwise-offload-components dit,text_encoder,vae \
-  --dit-offload-prefetch-size 1 \
-  --dit-layerwise-resident-layers 20 \
   --enable-torch-compile false \
   --host "${HOST:-0.0.0.0}" \
   --port "${PORT:-30010}"
