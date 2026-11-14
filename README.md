@@ -1,6 +1,6 @@
-# MiniMax H3 FL2VA on Vast.ai — No Layer-wise Offloading
+# MiniMax H3 FL2VA on Vast.ai — No Layer-wise Offloading, Clang Build
 
-This branch starts from `resicpe-mix` and configures SGLang to run MiniMax H3 FL2VA **without explicit layer-wise CPU offloading**.
+This branch starts from `nooffloading` and configures SGLang to run MiniMax H3 FL2VA **without explicit layer-wise CPU offloading**. It also installs Clang and selects `clang`/`clang++` for SGLang's native C++ extension build, with Cargo build parallelism defaulting to 4 jobs.
 
 The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or disk-space minimums. Hardware and disk information are printed for diagnostics only. The software still needs compatible Linux/Python dependencies, a working NVIDIA driver for CUDA inference, and enough actual resources to load and run the model.
 
@@ -9,7 +9,7 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 1. Reuse the existing FL2VA checkpoint when the completion marker and model index are present.
 2. Otherwise download only `model_index.json` and `FL2VA/*` from `MiniMaxAI/MiniMax-H3`.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
-4. Install OS build dependencies, stable Rust, Cargo, and SGLang Diffusion.
+4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=4` by default.
 5. Start SGLang without `--layerwise-offload-components`, `--dit-layerwise-resident-layers`, or `--layerwise-resident-layers`.
 
 There is no promise that every machine can run the model. With offloading disabled, insufficient GPU memory can cause CUDA out-of-memory errors during model loading or inference. Removing preflight restrictions does not remove real hardware limits.
@@ -22,7 +22,7 @@ On an Ubuntu/Linux instance:
 bash deploy.sh
 ~~~
 
-To force the installer to run again (including checking/installing Rust and Cargo):
+To force the installer to run again (including checking/installing Clang, Rust, and Cargo):
 
 ~~~bash
 FORCE_INSTALL=1 bash deploy.sh
@@ -49,6 +49,13 @@ WARMUP_NUM_FRAMES=124
 ~~~
 
 No GPU count or model-name setting is required. SGLang chooses its own runtime behavior and reports unsupported configurations when it starts.
+
+## Native build compiler
+
+- The installer installs the Ubuntu `clang` package and verifies that both `clang` and `clang++` are available.
+- Before building SGLang, it exports `CC=clang` and `CXX=clang++` so native C/C++ build steps can use Clang instead of the default GCC toolchain.
+- Cargo build parallelism defaults to 4 jobs (`CARGO_BUILD_JOBS=4`); override it by exporting `CARGO_BUILD_JOBS` before running the installer.
+- This is a compiler workaround to test, not a guarantee that the SGLang build will succeed. A failure may still come from source, PyTorch, Rust, or other toolchain compatibility issues.
 
 ## Hardware notes
 
