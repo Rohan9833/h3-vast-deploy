@@ -34,7 +34,7 @@ if command -v apt-get >/dev/null 2>&1; then
   elif command -v sudo >/dev/null 2>&1; then
     sudo apt-get update
     sudo apt-get install -y --no-install-recommends \
-      git git-lfs curl ca-certificates build-essential pkg-config \
+      git git-lfs curl ca-certificates build-essential pkg-config clang \
       ffmpeg libgl1 libglib2.0-0 python3-venv python3-dev
   else
     fail "OS dependencies are missing and neither root nor sudo is available."
