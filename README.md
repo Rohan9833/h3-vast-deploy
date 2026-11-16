@@ -1,8 +1,8 @@
-# MiniMax H3 FL2VA on Vast.ai — No Layer-wise Offloading, Clang Build
+# MiniMax H3 FL2VA on Vast.ai — 64 GB RAM Optimization, Clang Build
 
-This branch starts from `nooffloading` and configures SGLang to run MiniMax H3 FL2VA **without explicit layer-wise CPU offloading**. It also installs Clang and selects `clang`/`clang++` for SGLang's native C++ extension build, with Cargo build parallelism defaulting to 4 jobs.
+This experimental branch starts from `nooffloading-with-clang`. It keeps the Clang-based native build configuration and adds a runtime switch for SGLang layer-wise CPU offloading. The default is **enabled** for testing on memory-constrained hosts; it can be disabled through an environment variable.
 
-The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or disk-space minimums. Hardware and disk information are printed for diagnostics only. The software still needs compatible Linux/Python dependencies, a working NVIDIA driver for CUDA inference, and enough actual resources to load and run the model.
+The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or disk-space minimums. Passing installation does not guarantee that the model will fit or run: actual memory and hardware limits still apply.
 
 ## Deployment behavior
 
@@ -10,9 +10,7 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 2. Otherwise download only `model_index.json` and `FL2VA/*` from `MiniMaxAI/MiniMax-H3`.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
 4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=4` by default.
-5. Start SGLang without `--layerwise-offload-components`, `--dit-layerwise-resident-layers`, or `--layerwise-resident-layers`.
-
-There is no promise that every machine can run the model. With offloading disabled, insufficient GPU memory can cause CUDA out-of-memory errors during model loading or inference. Removing preflight restrictions does not remove real hardware limits.
+5. Start SGLang with or without explicit layer-wise CPU offloading according to `ENABLE_OFFLOADING`.
 
 ## Install and run
 
@@ -34,6 +32,50 @@ To download/reuse the checkpoint without installing SGLang or starting inference
 DOWNLOAD_ONLY=1 bash deploy.sh
 ~~~
 
+## Layer-wise CPU offloading switch
+
+The switch is read by `start_server.sh` from the environment or the optional `.env` file.
+
+| Setting | Behavior |
+|---|---|
+| `ENABLE_OFFLOADING=1` | Enables layer-wise CPU offloading (default) |
+| `ENABLE_OFFLOADING=0` | Disables the layer-wise offloading flags |
+
+When enabled, the launch command adds:
+
+~~~bash
+--layerwise-offload-components dit,text_encoder,vae
+--layerwise-resident-layers video_vae=36
+~~~
+
+When disabled, those two arguments are omitted. The script accepts `1/0`, `true/false`, `yes/no`, and `on/off`; any other value causes a clear startup error.
+
+To enable offloading in `.env`:
+
+~~~bash
+ENABLE_OFFLOADING=1
+~~~
+
+To disable it:
+
+~~~bash
+ENABLE_OFFLOADING=0
+~~~
+
+You can also set it for a single launch without editing `.env`:
+
+~~~bash
+ENABLE_OFFLOADING=1 bash start_server.sh
+~~~
+
+or:
+
+~~~bash
+ENABLE_OFFLOADING=0 bash start_server.sh
+~~~
+
+**Note:** This switch controls explicit layer-wise CPU offloading flags. It does not disable every possible SGLang/PyTorch memory-management behavior, nor does it guarantee that either mode fits a particular machine.
+
 ## Configuration
 
 Optional values can be set in `.env`:
@@ -46,9 +88,8 @@ HOST=0.0.0.0
 PORT=30010
 WARMUP_RESOLUTIONS=864x480
 WARMUP_NUM_FRAMES=124
+ENABLE_OFFLOADING=1
 ~~~
-
-No GPU count or model-name setting is required. SGLang chooses its own runtime behavior and reports unsupported configurations when it starts.
 
 ## Native build compiler
 
@@ -62,8 +103,8 @@ No GPU count or model-name setting is required. SGLang chooses its own runtime b
 - No project-level minimum GPU model, GPU count, VRAM, CPU cores, host RAM, or free-disk threshold is enforced.
 - A working NVIDIA driver/CUDA stack is still needed for GPU inference.
 - Model weights and inference activations require real memory. A host can pass the installer and still fail with CUDA OOM or host OOM.
-- Without layer-wise offloading, the model must fit using the available GPU/runtime memory arrangement. Waiting longer cannot resolve a hard memory shortage.
-- CPU count, host RAM, and storage speed can still affect startup and runtime, but this branch does not reject the host based on them.
+- Layer-wise offloading can reduce GPU residency but increases host-memory use and may increase latency. Disabling it may increase GPU-memory pressure.
+- CPU count, host RAM, and storage speed can still affect startup and runtime.
 
 ## API health check
 
