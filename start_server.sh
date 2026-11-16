@@ -7,10 +7,15 @@ cd "$PROJECT_DIR"
 [[ -d .venv ]] || { echo "Virtual environment missing. Run bash install.sh first." >&2; exit 1; }
 source .venv/bin/activate
 
+# Preserve values explicitly supplied in the shell; .env provides defaults.
+ENABLE_OFFLOADING_OVERRIDE="${ENABLE_OFFLOADING-}"
 if [[ -f .env ]]; then
   set -a
   source .env
   set +a
+fi
+if [[ -n "$ENABLE_OFFLOADING_OVERRIDE" ]]; then
+  ENABLE_OFFLOADING="$ENABLE_OFFLOADING_OVERRIDE"
 fi
 
 export HF_HOME="${HF_HOME:-$PROJECT_DIR/.cache/huggingface}"
