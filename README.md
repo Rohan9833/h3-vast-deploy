@@ -151,11 +151,13 @@ It reports system RAM, swap, GPU memory/utilization (when `nvidia-smi` is availa
 
 ## Generate the doctor GERD explanation video
 
-Place the two keyframes at these exact paths on the SGLang server machine:
+Place the two keyframe images directly in the repository root, alongside `generate_doctor_video.py`:
 
 ~~~text
-inputs/uploads/start.png
-inputs/uploads/end.png
+h3-vast-deploy/
+├── generate_doctor_video.py
+├── start.png
+└── end.png
 ~~~
 
 Start the server first, then run:
@@ -176,7 +178,7 @@ Optional arguments:
 python generate_doctor_video.py --base-url http://127.0.0.1:30010 --output outputs/doctor.mp4 --poll-interval 5 --timeout 7200 --steps 50 --seed 2101
 ~~~
 
-Set `SGLANG_BASE_URL` if the API is not at `http://127.0.0.1:30010`. The image paths are resolved on the SGLang server itself: if the server runs in a container, `inputs/uploads/` must be inside that container or mounted there at the same path. The script uses the supplied doctor prompt and includes the spoken line verbatim. It requests the 768-pixel short-edge profile; generated identity, timing, and exact endpoint matching remain model outputs and are not guaranteed by the API client.
+Set `SGLANG_BASE_URL` if the API is not at `http://127.0.0.1:30010`. The image paths are resolved on the SGLang server itself: if the server runs in a container, the repository root containing `start.png` and `end.png` must be inside that container or mounted there at the same path. The script uses the supplied doctor prompt and includes the spoken line verbatim. It requests the 768-pixel short-edge profile; generated identity, timing, and exact endpoint matching remain model outputs and are not guaranteed by the API client.
 
 ## API health check
 
