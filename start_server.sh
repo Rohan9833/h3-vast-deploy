@@ -10,7 +10,7 @@ source .venv/bin/activate
 # Preserve explicitly exported shell settings; values in .env act as defaults.
 declare -A SHELL_OVERRIDES=()
 RUNTIME_ENV_VARS=(
-  ENABLE_OFFLOADING MODEL_PATH MODEL_VARIANT MODEL_ID HOST PORT
+  ENABLE_OFFLOADING MODEL_PATH MODEL_VARIANT MODEL_ID LOCAL_MODEL_DIR HOST PORT
   WARMUP_RESOLUTIONS WARMUP_NUM_FRAMES OFFLOAD_COMPONENTS
   RESIDENT_LAYERS PYTORCH_CUDA_ALLOC_CONF HF_HOME DRY_RUN
 )
@@ -35,10 +35,11 @@ export HF_HOME="${HF_HOME:-$PROJECT_DIR/.cache/huggingface}"
 export PYTORCH_CUDA_ALLOC_CONF="${PYTORCH_CUDA_ALLOC_CONF:-expandable_segments:True}"
 mkdir -p "$HF_HOME" logs
 
-if [[ -f "$PROJECT_DIR/models/MiniMax-H3/FL2VA/model_index.json" ]]; then
-  DEFAULT_MODEL_PATH="$PROJECT_DIR/models/MiniMax-H3"
+LOCAL_MODEL_DIR="${LOCAL_MODEL_DIR:-$PROJECT_DIR/models/MiniMax-H3}"
+if [[ -f "$LOCAL_MODEL_DIR/FL2VA/model_index.json" ]]; then
+  DEFAULT_MODEL_PATH="$LOCAL_MODEL_DIR"
 else
-  DEFAULT_MODEL_PATH="MiniMaxAI/MiniMax-H3"
+  DEFAULT_MODEL_PATH="${MODEL_ID:-MiniMaxAI/MiniMax-H3}"
 fi
 
 ENABLE_OFFLOADING="${ENABLE_OFFLOADING:-1}"
