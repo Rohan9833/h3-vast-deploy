@@ -149,6 +149,35 @@ It reports system RAM, swap, GPU memory/utilization (when `nvidia-smi` is availa
 - Layer-wise offloading can reduce GPU residency but increases host-memory use and may increase latency. Disabling it may increase GPU-memory pressure.
 - CPU count, host RAM, and storage speed can still affect startup and runtime.
 
+## Generate the doctor GERD explanation video
+
+Place the two keyframes at these exact paths on the SGLang server machine:
+
+~~~text
+inputs/uploads/start.png
+inputs/uploads/end.png
+~~~
+
+Start the server first, then run:
+
+~~~bash
+python generate_doctor_video.py
+~~~
+
+The script submits a 10-second `fl2va` job to `POST /v1/videos`, using `start.png` as frame index `0` and `end.png` as frame index `-1`. It polls `GET /v1/videos/{id}` until completion and downloads `GET /v1/videos/{id}/content` to:
+
+~~~text
+outputs/doctor_gerd_transition.mp4
+~~~
+
+Optional arguments:
+
+~~~bash
+python generate_doctor_video.py --base-url http://127.0.0.1:30010 --output outputs/doctor.mp4 --poll-interval 5 --timeout 7200 --steps 50 --seed 2101
+~~~
+
+Set `SGLANG_BASE_URL` if the API is not at `http://127.0.0.1:30010`. The image paths are resolved on the SGLang server itself: if the server runs in a container, `inputs/uploads/` must be inside that container or mounted there at the same path. The script uses the supplied doctor prompt and includes the spoken line verbatim. It requests the 768-pixel short-edge profile; generated identity, timing, and exact endpoint matching remain model outputs and are not guaranteed by the API client.
+
 ## API health check
 
 After the server starts, test it from the instance:
