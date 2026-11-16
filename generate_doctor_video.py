@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate a 10-second MiniMax H3 FL2VA video from uploads/start.png to uploads/end.png.
+"""Generate a 10-second MiniMax H3 FL2VA video from root-level start.png to end.png.
 
 Run this script on the same machine/container where SGLang can read the input files.
 The server must already be running with --model-variant fl2va.
@@ -18,9 +18,8 @@ import requests
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
-INPUT_DIR = PROJECT_DIR / "inputs" / "uploads"
-START_IMAGE = INPUT_DIR / "start.png"
-END_IMAGE = INPUT_DIR / "end.png"
+START_IMAGE = PROJECT_DIR / "start.png"
+END_IMAGE = PROJECT_DIR / "end.png"
 DEFAULT_OUTPUT = PROJECT_DIR / "outputs" / "doctor_gerd_transition.mp4"
 DEFAULT_BASE_URL = os.getenv("SGLANG_BASE_URL", "http://127.0.0.1:30010").rstrip("/")
 MODEL_ID = os.getenv("MODEL_ID", "MiniMaxAI/MiniMax-H3")
@@ -66,7 +65,7 @@ The doctor says: Correct. In GERD, stomach acid or food can come back up into th
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Submit a 10-second FL2VA job using inputs/uploads/start.png and end.png."
+        description="Submit a 10-second FL2VA job using root-level start.png and end.png."
     )
     parser.add_argument("--base-url", default=DEFAULT_BASE_URL, help="SGLang base URL, e.g. http://127.0.0.1:30010")
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT, help="Output MP4 path")
@@ -83,7 +82,7 @@ def require_inputs() -> None:
         raise FileNotFoundError(
             "Required keyframe image(s) not found:\n  "
             + "\n  ".join(missing)
-            + "\nPlace start.png and end.png in inputs/uploads/."
+            + "\nPlace start.png and end.png in the repository root folder."
         )
 
 
