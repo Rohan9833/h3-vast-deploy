@@ -109,6 +109,16 @@ DRY_RUN=1 bash start_server.sh
 
 The virtual environment must exist, but SGLang does not need to be launched for this check.
 
+## Local validation (no GPU required)
+
+Run the repository's shell/Python syntax and configuration checks before renting hardware:
+
+~~~bash
+bash validate.sh
+~~~
+
+These checks validate local code and environment-variable behavior only. They do not prove that the installed SGLang revision accepts every runtime flag or that the checkpoint fits in a given machine.
+
 ## Monitoring
 
 Run the optional resource monitor in another terminal while starting or generating:
