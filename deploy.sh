@@ -13,7 +13,30 @@ fail() { log "ERROR: $*"; exit 1; }
 trap 'status=$?; if [[ $status -ne 0 ]]; then log "Deployment stopped with exit code $status. Review $LOG_FILE"; fi' EXIT
 
 [[ "$(uname -s)" == "Linux" ]] || fail "Run this script on Linux/Ubuntu."
-if [[ -f .env ]]; then set -a; source .env; set +a; fi
+
+# Preserve explicit environment values; .env supplies defaults.
+declare -A SHELL_OVERRIDES=()
+RUNTIME_ENV_VARS=(
+  HF_TOKEN HF_HOME MODEL_ID MODEL_PATH MODEL_VARIANT HOST PORT
+  ENABLE_OFFLOADING WARMUP_RESOLUTIONS WARMUP_NUM_FRAMES
+  OFFLOAD_COMPONENTS RESIDENT_LAYERS PYTORCH_CUDA_ALLOC_CONF DRY_RUN
+  PYTHON_BIN FORCE_INSTALL DOWNLOAD_ONLY
+)
+for name in "${RUNTIME_ENV_VARS[@]}"; do
+  if [[ -v "$name" ]]; then
+    SHELL_OVERRIDES["$name"]="${!name}"
+  fi
+done
+if [[ -f .env ]]; then
+  set -a
+  # .env is a trusted shell-style config file owned by the deployment.
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+for name in "${!SHELL_OVERRIDES[@]}"; do
+  export "$name=${SHELL_OVERRIDES[$name]}"
+done
 
 export HF_HUB_DISABLE_PROGRESS_BARS=0
 
@@ -54,8 +77,7 @@ if [[ "${DOWNLOAD_ONLY:-0}" == "1" ]]; then
   exit 0
 fi
 
-log "STEP 3/3: Installing runtime and attempting SGLang startup."
-# Re-run the installer if the marker is absent OR Rust/Cargo are missing.
+log "STEP 3/3: Installing runtime and starting SGLang."
 if [[ "${FORCE_INSTALL:-0}" == "1" || ! -f .install-complete ]] || ! command -v cargo >/dev/null 2>&1 || ! command -v rustc >/dev/null 2>&1; then
   bash install.sh
   [[ -f .install-complete ]] || fail "Installer finished but .install-complete marker is missing."
@@ -64,7 +86,5 @@ else
 fi
 
 [[ -x .venv/bin/python ]] || fail "Python environment not found. Run bash install.sh and inspect errors."
-
-log "Attempting FL2VA inference WITHOUT explicit layer-wise offloading."
-log "A successful download does not guarantee that this host can load or run the model."
+log "Launching server. Explicit layer-wise CPU offloading is controlled by ENABLE_OFFLOADING (default: 1)."
 exec bash start_server.sh
