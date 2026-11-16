@@ -6,8 +6,8 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 
 ## Deployment behavior
 
-1. Reuse the existing FL2VA checkpoint when the completion marker and model index are present.
-2. Otherwise download only `model_index.json` and `FL2VA/*` from `MiniMaxAI/MiniMax-H3`.
+1. Reuse the existing FL2VA checkpoint when the completion marker is present and `FL2VA/model_index.json` parses as valid JSON.
+2. Otherwise download only `model_index.json` and `FL2VA/*` from the configured model repository; Hugging Face Hub resumes existing files on rerun.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
 4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=2` by default.
 5. Start SGLang with configurable warmup and layer-wise CPU offloading settings. `DRY_RUN=1` prints the launch command without starting inference.
@@ -84,6 +84,7 @@ Optional values can be set in `.env`:
 
 ~~~bash
 HF_TOKEN=
+HF_DOWNLOAD_MAX_WORKERS=4
 MODEL_ID=MiniMaxAI/MiniMax-H3
 MODEL_PATH=/workspace/h3-vast-deploy/models/MiniMax-H3
 HOST=0.0.0.0
