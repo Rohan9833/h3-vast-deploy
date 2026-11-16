@@ -10,7 +10,7 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 2. Otherwise download only `model_index.json` and `FL2VA/*` from `MiniMaxAI/MiniMax-H3`.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
 4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=4` by default.
-5. Start SGLang with or without explicit layer-wise CPU offloading according to `ENABLE_OFFLOADING`.
+5. Start SGLang with configurable warmup and layer-wise CPU offloading settings. `DRY_RUN=1` prints the launch command without starting inference.
 
 ## Install and run
 
@@ -34,7 +34,7 @@ DOWNLOAD_ONLY=1 bash deploy.sh
 
 ## Layer-wise CPU offloading switch
 
-The switch is read by `start_server.sh` from the environment or the optional `.env` file.
+The switch is read by `start_server.sh` from the environment or the optional `.env` file. Explicit environment variables take precedence over `.env` values in both `deploy.sh` and `start_server.sh`.
 
 | Setting | Behavior |
 |---|---|
@@ -54,6 +54,8 @@ To enable offloading in `.env`:
 
 ~~~bash
 ENABLE_OFFLOADING=1
+OFFLOAD_COMPONENTS=dit,text_encoder,vae
+RESIDENT_LAYERS=video_vae=36
 ~~~
 
 To disable it:
@@ -90,6 +92,32 @@ WARMUP_RESOLUTIONS=864x480
 WARMUP_NUM_FRAMES=124
 ENABLE_OFFLOADING=1
 ~~~
+
+## Startup tuning and dry run
+
+The following values are configurable in `.env` or as exported environment variables:
+
+- `WARMUP_RESOLUTIONS` and `WARMUP_NUM_FRAMES` control startup warmup only; they do not set the requested output video's resolution or duration.
+- `OFFLOAD_COMPONENTS` and `RESIDENT_LAYERS` control the explicit layer-wise offloading CLI values when offloading is enabled. Their defaults retain the existing FL2VA settings and must be validated against the installed SGLang revision.
+- `PYTORCH_CUDA_ALLOC_CONF` defaults to `expandable_segments:True` and can be overridden for controlled tests.
+
+To inspect the exact launch command without loading the model:
+
+~~~bash
+DRY_RUN=1 bash start_server.sh
+~~~
+
+The virtual environment must exist, but SGLang does not need to be launched for this check.
+
+## Monitoring
+
+Run the optional resource monitor in another terminal while starting or generating:
+
+~~~bash
+bash monitor.sh 2
+~~~
+
+It reports system RAM, swap, GPU memory/utilization (when `nvidia-smi` is available), and the SGLang process RSS. It does not alter runtime settings.
 
 ## Native build compiler
 
