@@ -9,7 +9,7 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 1. Reuse the existing FL2VA checkpoint when the completion marker and model index are present.
 2. Otherwise download only `model_index.json` and `FL2VA/*` from `MiniMaxAI/MiniMax-H3`.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
-4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=4` by default.
+4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=2` by default.
 5. Start SGLang with configurable warmup and layer-wise CPU offloading settings. `DRY_RUN=1` prints the launch command without starting inference.
 
 ## Install and run
@@ -93,6 +93,10 @@ WARMUP_NUM_FRAMES=124
 ENABLE_OFFLOADING=1
 ~~~
 
+## Download tuning
+
+`HF_DOWNLOAD_MAX_WORKERS` controls the number of concurrent Hugging Face file downloads (default: `4`). Lower it if network or disk activity needs to be gentler; it does not reduce the model checkpoint's total size.
+
 ## Startup tuning and dry run
 
 The following values are configurable in `.env` or as exported environment variables:
@@ -133,7 +137,7 @@ It reports system RAM, swap, GPU memory/utilization (when `nvidia-smi` is availa
 
 - The installer installs the Ubuntu `clang` package and verifies that both `clang` and `clang++` are available.
 - Before building SGLang, it exports `CC=clang` and `CXX=clang++` so native C/C++ build steps can use Clang instead of the default GCC toolchain.
-- Cargo build parallelism defaults to 4 jobs (`CARGO_BUILD_JOBS=4`); override it by exporting `CARGO_BUILD_JOBS` before running the installer.
+- Cargo build parallelism defaults to 2 jobs (`CARGO_BUILD_JOBS=2`) to limit concurrent native-build memory use on the target host; override it by exporting `CARGO_BUILD_JOBS` before running the installer.
 - This is a compiler workaround to test, not a guarantee that the SGLang build will succeed. A failure may still come from source, PyTorch, Rust, or other toolchain compatibility issues.
 
 ## Hardware notes
