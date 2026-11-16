@@ -84,15 +84,15 @@ else
 fi
 
 # Cargo and Clang are selected explicitly for the SGLang native-extension build.
-# The Rust cc crate honors CC/CXX when compiling the PyTorch C++ bindings.
+# Keep build parallelism configurable because native compilation consumes host RAM.
 command -v clang >/dev/null 2>&1 || fail "clang is required for the SGLang native build."
 command -v clang++ >/dev/null 2>&1 || fail "clang++ is required for the SGLang native build."
 export PATH="$CARGO_HOME/bin:$PATH"
 export CC=clang
 export CXX=clang++
-export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-4}"
-export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-4}"
-log "Building SGLang with Clang: CC=$CC, CXX=$CXX, Cargo jobs=$CARGO_BUILD_JOBS"
+export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
+export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
+log "Building SGLang with Clang: CC=$CC, CXX=$CXX, Cargo jobs=$CARGO_BUILD_JOBS, CMake jobs=$CMAKE_BUILD_PARALLEL_LEVEL"
 python -m pip install -e ".deps/sglang/python[diffusion]" --upgrade
 
 log "Installing project utilities"
@@ -102,4 +102,4 @@ mkdir -p models outputs logs
 chmod +x start_server.sh
 touch .install-complete
 log "Dependencies installed. No GPU/VRAM/CPU/RAM eligibility checks were applied."
-printf '\nNext step: run bash deploy.sh to attempt FL2VA server startup without layer-wise offloading.\n'
+printf '\nNext step: configure .env (or export settings) and run bash start_server.sh.\n'
