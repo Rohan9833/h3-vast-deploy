@@ -1,4 +1,4 @@
-"""Configuration for MiniMax H3 FL2VA deployment without layer-wise offloading."""
+"""Configuration for MiniMax H3 FL2VA deployment."""
 
 import os
 from pathlib import Path
@@ -12,7 +12,24 @@ HF_HOME = Path(os.getenv("HF_HOME", str(PROJECT_DIR / ".cache" / "huggingface"))
 LOCAL_MODEL_DIR = Path(os.getenv("LOCAL_MODEL_DIR", str(PROJECT_DIR / "models" / "MiniMax-H3")))
 HF_TOKEN = os.getenv("HF_TOKEN") or None
 
-# Intentionally contains no layer-wise CPU offloading or resident-layer flags.
+
+def _env_bool(name: str, default: bool) -> bool:
+    """Read a boolean environment variable with explicit validation."""
+    value = os.getenv(name)
+    if value is None:
+        return default
+
+    normalized = value.strip().lower()
+    if normalized in {"1", "true", "yes", "on"}:
+        return True
+    if normalized in {"0", "false", "no", "off"}:
+        return False
+    raise ValueError(f"{name} must be set to 1/on or 0/off; got {value!r}")
+
+
+# Enabled by default for the 64 GB host-RAM optimization profile.
+ENABLE_OFFLOADING = _env_bool("ENABLE_OFFLOADING", default=True)
+
 SGLANG_ARGS = [
     "--model-path",
     str(LOCAL_MODEL_DIR) if (LOCAL_MODEL_DIR / "FL2VA" / "model_index.json").exists() else MODEL_ID,
@@ -29,3 +46,13 @@ SGLANG_ARGS = [
     "--port",
     str(PORT),
 ]
+
+if ENABLE_OFFLOADING:
+    SGLANG_ARGS.extend(
+        [
+            "--layerwise-offload-components",
+            "dit,text_encoder,vae",
+            "--layerwise-resident-layers",
+            "video_vae=36",
+        ]
+    )
