@@ -20,7 +20,7 @@ RUNTIME_ENV_VARS=(
   HF_TOKEN HF_HOME HF_DOWNLOAD_MAX_WORKERS MODEL_ID MODEL_PATH MODEL_VARIANT LOCAL_MODEL_DIR HOST PORT
   ENABLE_OFFLOADING WARMUP_RESOLUTIONS WARMUP_NUM_FRAMES
   OFFLOAD_COMPONENTS RESIDENT_LAYERS PYTORCH_CUDA_ALLOC_CONF DRY_RUN
-  PYTHON_BIN FORCE_INSTALL DOWNLOAD_ONLY
+  PYTHON_BIN FORCE_INSTALL DOWNLOAD_ONLY HEALTH_TIMEOUT_SECONDS HEALTH_POLL_INTERVAL
 )
 for name in "${RUNTIME_ENV_VARS[@]}"; do
   if [[ -v "$name" ]]; then
@@ -86,5 +86,53 @@ else
 fi
 
 [[ -x .venv/bin/python ]] || fail "Python environment not found. Run bash install.sh and inspect errors."
-log "Launching server. Explicit layer-wise CPU offloading is controlled by ENABLE_OFFLOADING (default: 1)."
-exec bash start_server.sh
+log "Launching SGLang in the background. Explicit layer-wise CPU offloading is controlled by ENABLE_OFFLOADING (default: 1)."
+SERVER_LOG="$PROJECT_DIR/logs/server.log"
+HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-3600}"
+HEALTH_POLL_INTERVAL="${HEALTH_POLL_INTERVAL:-10}"
+PORT="${PORT:-30010}"
+
+[[ "$HEALTH_TIMEOUT_SECONDS" =~ ^[1-9][0-9]*$ ]] || fail "HEALTH_TIMEOUT_SECONDS must be a positive integer."
+[[ "$HEALTH_POLL_INTERVAL" =~ ^[1-9][0-9]*$ ]] || fail "HEALTH_POLL_INTERVAL must be a positive integer."
+
+bash start_server.sh >> "$SERVER_LOG" 2>&1 &
+SERVER_PID=$!
+log "SGLang process started (PID $SERVER_PID). Server output: $SERVER_LOG"
+log "Waiting up to $HEALTH_TIMEOUT_SECONDS seconds for http://127.0.0.1:$PORT/health"
+
+deadline=$((SECONDS + HEALTH_TIMEOUT_SECONDS))
+while (( SECONDS < deadline )); do
+  if python - "$PORT" <<'PY'
+import sys
+import urllib.error
+import urllib.request
+
+url = f"http://127.0.0.1:{int(sys.argv[1])}/health"
+try:
+    with urllib.request.urlopen(url, timeout=5) as response:
+        body = response.read().decode("utf-8", errors="replace")
+        if response.status == 200:
+            print(body)
+            raise SystemExit(0)
+except (OSError, urllib.error.URLError, TimeoutError, ValueError):
+    pass
+raise SystemExit(1)
+PY
+  then
+    log "SGLang health check passed. API is ready at http://127.0.0.1:$PORT"
+    log "Keep this deploy process running. Follow server logs with: tail -f $SERVER_LOG"
+    wait "$SERVER_PID"
+    exit $?
+  fi
+
+  if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    wait "$SERVER_PID" || true
+    fail "SGLang exited before becoming healthy. Inspect $SERVER_LOG"
+  fi
+  sleep "$HEALTH_POLL_INTERVAL"
+done
+
+log "Health check timed out. Stopping SGLang."
+kill "$SERVER_PID" 2>/dev/null || true
+wait "$SERVER_PID" 2>/dev/null || true
+fail "SGLang did not become healthy within $HEALTH_TIMEOUT_SECONDS seconds. Inspect $SERVER_LOG"
