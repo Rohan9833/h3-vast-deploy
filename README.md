@@ -9,8 +9,8 @@ The installer does not enforce GPU model/count, VRAM, CPU-core, host-RAM, or dis
 1. Reuse the existing FL2VA checkpoint when the completion marker is present and `FL2VA/model_index.json` parses as valid JSON.
 2. Otherwise download only `model_index.json` and `FL2VA/*` from the configured model repository; Hugging Face Hub resumes existing files on rerun.
 3. Report available hardware without rejecting the host based on GPU, VRAM, CPU, or RAM.
-4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=2` by default.
-5. Start SGLang with configurable warmup and layer-wise CPU offloading settings. `DRY_RUN=1` prints the launch command without starting inference.
+4. Install OS build dependencies (including Clang), stable Rust, Cargo, and SGLang Diffusion. Before the native build, fetch the radix-tree Rust dependencies and apply the `torch-sys 0.24.0` C++20 identifier compatibility patch automatically. The SGLang native-extension build uses `CC=clang`, `CXX=clang++`, and `CARGO_BUILD_JOBS=2` by default.
+5. Start SGLang with configurable warmup and layer-wise CPU offloading settings. `deploy.sh` waits for the `/health` endpoint and reports when the API is ready. `DRY_RUN=1` prints the launch command without starting inference when using `start_server.sh` directly.
 
 ## Install and run
 
@@ -48,7 +48,7 @@ When enabled, the launch command adds:
 --layerwise-resident-layers video_vae=36
 ~~~
 
-When disabled, those two arguments are omitted. The script accepts `1/0`, `true/false`, `yes/no`, and `on/off`; any other value causes a clear startup error.
+When disabled, those two arguments are omitted. The script accepts `1/0`, `true/false`, `yes/no`, and `on/off`; any other value causes a clear startup error. `deploy.sh` keeps the SGLang process attached to the deployment session after the health check succeeds and writes its output to `logs/server.log`.
 
 To enable offloading in `.env`:
 
@@ -112,7 +112,7 @@ To inspect the exact launch command without loading the model:
 DRY_RUN=1 bash start_server.sh
 ~~~
 
-The virtual environment must exist, but SGLang does not need to be launched for this check.
+The virtual environment must exist, but SGLang does not need to be launched for this check. The validation also compiles the automatic `torch-sys` patch helper.
 
 ## Local validation (no GPU required)
 
@@ -151,7 +151,7 @@ It reports system RAM, swap, GPU memory/utilization (when `nvidia-smi` is availa
 
 ## Generate the doctor GERD explanation video
 
-Place the two keyframe images directly in the repository root, alongside `generate_doctor_video.py`:
+Place the two keyframe images either directly in the repository root (preferred) or in `inputs/uploads/`. The script checks the repository root first, then falls back to `inputs/uploads/`:
 
 ~~~text
 h3-vast-deploy/
@@ -178,7 +178,7 @@ Optional arguments:
 python generate_doctor_video.py --base-url http://127.0.0.1:30010 --output outputs/doctor.mp4 --poll-interval 5 --timeout 7200 --steps 50 --seed 2101
 ~~~
 
-Set `SGLANG_BASE_URL` if the API is not at `http://127.0.0.1:30010`. The image paths are resolved on the SGLang server itself: if the server runs in a container, the repository root containing `start.png` and `end.png` must be inside that container or mounted there at the same path. The script uses the supplied doctor prompt and includes the spoken line verbatim. It requests the 768-pixel short-edge profile; generated identity, timing, and exact endpoint matching remain model outputs and are not guaranteed by the API client.
+Set `SGLANG_BASE_URL` if the API is not at `http://127.0.0.1:30010`. The selected image paths are resolved on the SGLang server itself: if the server runs in a container, the selected image directory must be inside that container or mounted there at the same path. The script uses the supplied doctor prompt and includes the spoken line verbatim. It requests the 768-pixel short-edge profile; generated identity, timing, and exact endpoint matching remain model outputs and are not guaranteed by the API client.
 
 ## API health check
 
