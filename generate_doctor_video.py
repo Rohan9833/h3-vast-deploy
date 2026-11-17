@@ -18,8 +18,14 @@ import requests
 
 
 PROJECT_DIR = Path(__file__).resolve().parent
-START_IMAGE = PROJECT_DIR / "start.png"
-END_IMAGE = PROJECT_DIR / "end.png"
+# Prefer repository-root images; accept the historical inputs/uploads layout too.
+def resolve_keyframe(filename: str) -> Path:
+    candidates = (PROJECT_DIR / filename, PROJECT_DIR / "inputs" / "uploads" / filename)
+    return next((path for path in candidates if path.is_file()), candidates[0])
+
+
+START_IMAGE = resolve_keyframe("start.png")
+END_IMAGE = resolve_keyframe("end.png")
 DEFAULT_OUTPUT = PROJECT_DIR / "outputs" / "doctor_gerd_transition.mp4"
 DEFAULT_BASE_URL = os.getenv("SGLANG_BASE_URL", "http://127.0.0.1:30010").rstrip("/")
 MODEL_ID = os.getenv("MODEL_ID", "MiniMaxAI/MiniMax-H3")
