@@ -12,7 +12,7 @@ done
 
 echo "[VALIDATE] Checking Python syntax..."
 PYTHON_BIN="${PYTHON_BIN:-python3}"
-"$PYTHON_BIN" -m py_compile config.py download_model.py test_api.py generate_doctor_video.py
+"$PYTHON_BIN" -m py_compile config.py download_model.py test_api.py generate_doctor_video.py scripts/patch_torch_sys_cxx20.py
 echo "[VALIDATE] Python syntax OK."
 
 echo "[VALIDATE] Checking configuration defaults and offloading switch..."
