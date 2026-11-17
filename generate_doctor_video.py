@@ -88,7 +88,7 @@ def require_inputs() -> None:
         raise FileNotFoundError(
             "Required keyframe image(s) not found:\n  "
             + "\n  ".join(missing)
-            + "\nPlace start.png and end.png in the repository root folder."
+            + "\nPlace start.png and end.png in the repository root or inputs/uploads/ folder."
         )
 
 
