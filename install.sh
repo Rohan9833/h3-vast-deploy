@@ -93,6 +93,19 @@ export CXX=clang++
 export CARGO_BUILD_JOBS="${CARGO_BUILD_JOBS:-2}"
 export CMAKE_BUILD_PARALLEL_LEVEL="${CMAKE_BUILD_PARALLEL_LEVEL:-2}"
 log "Building SGLang with Clang: CC=$CC, CXX=$CXX, Cargo jobs=$CARGO_BUILD_JOBS, CMake jobs=$CMAKE_BUILD_PARALLEL_LEVEL"
+
+# Fetch the radix-tree crate dependencies first so torch-sys is unpacked in
+# Cargo's registry cache before the C++20 compatibility patch is applied.
+RADIX_TREE_MANIFEST=".deps/sglang/rust/sglang-radix-tree/Cargo.toml"
+if [[ -f "$RADIX_TREE_MANIFEST" ]]; then
+  log "Fetching Rust dependencies for the SGLang radix-tree extension"
+  cargo fetch --manifest-path "$RADIX_TREE_MANIFEST"
+  log "Applying torch-sys C++20 compatibility patch"
+  python scripts/patch_torch_sys_cxx20.py "$CARGO_HOME"
+else
+  fail "Expected SGLang radix-tree manifest not found: $RADIX_TREE_MANIFEST"
+fi
+
 python -m pip install -e ".deps/sglang/python[diffusion]" --upgrade
 
 log "Installing project utilities"
