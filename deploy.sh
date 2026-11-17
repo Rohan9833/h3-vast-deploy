@@ -86,6 +86,11 @@ else
 fi
 
 [[ -x .venv/bin/python ]] || fail "Python environment not found. Run bash install.sh and inspect errors."
+if [[ "${DRY_RUN:-0}" == "1" ]]; then
+  log "DRY_RUN=1: printing the SGLang command without starting the server."
+  bash start_server.sh
+  exit 0
+fi
 log "Launching SGLang in the background. Explicit layer-wise CPU offloading is controlled by ENABLE_OFFLOADING (default: 1)."
 SERVER_LOG="$PROJECT_DIR/logs/server.log"
 HEALTH_TIMEOUT_SECONDS="${HEALTH_TIMEOUT_SECONDS:-3600}"
