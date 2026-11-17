@@ -32,6 +32,16 @@ To download/reuse the checkpoint without installing SGLang or starting inference
 DOWNLOAD_ONLY=1 bash deploy.sh
 ~~~
 
+The normal `deploy.sh` flow installs/reuses the Python environment, downloads or reuses the FL2VA checkpoint, installs the native SGLang runtime (including the automatic `torch-sys` compatibility patch when installation runs), starts SGLang, and waits for `/health` before reporting readiness. The deployment process stays attached while the server runs; server output is written to `logs/server.log`.
+
+Health-check timing can be adjusted with:
+
+~~~bash
+HEALTH_TIMEOUT_SECONDS=5400 HEALTH_POLL_INTERVAL=10 bash deploy.sh
+~~~
+
+Use `DRY_RUN=1 bash deploy.sh` to print the SGLang launch command without starting the server.
+
 ## Layer-wise CPU offloading switch
 
 The switch is read by `start_server.sh` from the environment or the optional `.env` file. Explicit environment variables take precedence over `.env` values in both `deploy.sh` and `start_server.sh`.
